@@ -7,6 +7,10 @@ import cv2
 
 
 def slice_tile(img, i, j, tile_size, padding, bg_color=0):
+    """
+    Slice a tile from the bigger image, if the tile is less then expected size (it's slices at the edge of the image),
+    it's extended with blank space of the given background color
+    """
     full_size = tile_size + padding * 2
 
     top_offset, left_offset = (0, 0)
@@ -36,6 +40,10 @@ def slice_tile(img, i, j, tile_size, padding, bg_color=0):
 
 
 def split(filename, scale_to_width=1024, tile_size=32, padding=16, output_dir='split', bg_color=0):
+    """
+    Scale image to width 1024, convert to grayscale and than slice by tiles.
+    It's possible to slice image with padding and each tile will contain pixels from surrounding tiles
+    """
     img = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
 
     h, w = img.shape
