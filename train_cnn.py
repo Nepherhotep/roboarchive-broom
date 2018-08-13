@@ -54,20 +54,20 @@ def main():
     # 7. Define model architecture
     model = Sequential()
 
-    model.add(Convolution2D(64, 3, 3, activation='relu', input_shape=(64, 64, 1)))
-    model.add(Convolution2D(64, 3, 3, activation='relu'))
+    model.add(Convolution2D(64, (3, 3), activation='relu', input_shape=(64, 64, 1)))
+    model.add(Convolution2D(64, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
-    model.add(Convolution2D(32, 3, 3, activation='relu'))
+    model.add(Convolution2D(32, (3, 3), activation='relu'))
     model.add(Dropout(0.25))
 
     model.add(Dense(1024, activation='relu'))
 
     # 8. Compile model
-    model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
+    model.compile(loss='mean_absolute_percentage_error', optimizer='adam', metrics=['accuracy'])
 
     # 9. Fit model on training data
-    model.fit(x_train, y_train, batch_size=32, nb_epoch=10, verbose=1)
+    model.fit(x_train, y_train, batch_size=32, epochs=10, verbose=1)
 
 
 if __name__ == '__main__':
