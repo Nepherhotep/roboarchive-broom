@@ -1,6 +1,9 @@
+import functools
+
 import cv2
 import os
 
+import h5py
 import numpy as np
 
 from keras.models import Sequential
@@ -27,6 +30,31 @@ class TileLoader:
         return train_data
 
 
+def cache_train_data(filename):
+    """
+    Cache loading images into hd5f file to speedup loading
+    """
+    def deco(fun):
+        def new_func(*args, **kwargs):
+            if os.path.exists(filename):
+                h5f = h5py.File(filename, 'r')
+                x_train = h5f['x_train'][:]
+                y_train = h5f['y_train'][:]
+                h5f.close()
+                return x_train, y_train
+            else:
+                x_train, y_train = fun(*args, **kwargs)
+
+                h5f = h5py.File(filename, 'w')
+                h5f.create_dataset('x_train', data=x_train)
+                h5f.create_dataset('y_train', data=y_train)
+                h5f.close()
+                return x_train, y_train
+        return new_func
+    return deco
+
+
+@cache_train_data('train_data.hdf5')
 def load_data(x_path, y_path):
     """
     Check raw/clean (X/Y) data consistency and load data array
