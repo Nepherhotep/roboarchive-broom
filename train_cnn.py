@@ -36,9 +36,13 @@ def load_data(x_path, y_path):
 
     assert raw_files == clean_files, 'X/Y files are not the same'
 
-    x_loader = TileLoader(x_path, 64)
-    y_loader = TileLoader(y_path, 32)
-    return x_loader.load(), y_loader.load()
+    print('Loading x train data')
+    x_train = TileLoader(x_path, 64).load()
+
+    print('Loading y train data')
+    y_train = TileLoader(y_path, 32).load()
+
+    return x_train, y_train
 
 
 def main():
@@ -46,23 +50,21 @@ def main():
 
     x_train, y_train = load_data('sample1-raw', 'sample1-clean')
 
+    print('Creating CNN')
     # 7. Define model architecture
     model = Sequential()
 
-    model.add(Convolution2D(64, 3, 3, activation='relu', input_shape=(1, 64, 64)))
+    model.add(Convolution2D(64, 3, 3, activation='relu', input_shape=(64, 64, 1)))
     model.add(Convolution2D(64, 3, 3, activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
 
     model.add(Convolution2D(32, 3, 3, activation='relu'))
     model.add(Dropout(0.25))
 
-    model.add(Flatten())
     model.add(Dense(1024, activation='relu'))
 
     # 8. Compile model
-    model.compile(loss='categorical_crossentropy',
-                  optimizer='adam',
-                  metrics=['accuracy'])
+    model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
 
     # 9. Fit model on training data
     model.fit(x_train, y_train, batch_size=32, nb_epoch=10, verbose=1)
