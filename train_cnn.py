@@ -48,7 +48,7 @@ def load_data(x_path, y_path):
 def main():
     np.random.seed(123)  # for reproducibility
 
-    x_train, y_train = load_data('sample1-raw', 'sample1-clean')
+    x_train, y_train = load_data('samples-raw', 'samples-clean')
 
     print('Creating CNN')
     # 7. Define model architecture
