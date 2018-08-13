@@ -1,7 +1,7 @@
 # roboarchive-broom
 A toolbox to clean archive documents
 
-## Install dependancies
+## Install dependencies
 
 1. Python 3.6
 2. Keras
@@ -9,7 +9,7 @@ A toolbox to clean archive documents
 
 ## Unpack Samples
 
-Unpack samles into the project dir, it should be two directories in it:
+Unpack samples into the project dir, it should be two directories in it:
 
 * "samples-raw" (x-train data), the tiles are of 64x64 size. The central 32x32 area does not
 intersect with neighbour tiles (and 16 + 16 pixels padding does).
