@@ -1,3 +1,4 @@
+import argparse
 import functools
 
 import cv2
@@ -6,10 +7,7 @@ import os
 import h5py
 import numpy as np
 
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten
-from keras.layers import Convolution2D, MaxPooling2D
-from keras.utils import np_utils
+from cnn import get_model
 
 
 class XTileLoader:
@@ -92,26 +90,29 @@ def load_data(x_path, y_path):
     return x_train, y_train
 
 
-def main():
+def train(weights_file):
     np.random.seed(123)  # for reproducibility
 
     x_train, y_train = load_data('samples-raw', 'samples-clean')
 
     print('Creating CNN')
-    model = Sequential()
 
-    model.add(Convolution2D(20, (3, 3), activation='relu', input_shape=(64, 64, 1), padding='same'))
-    model.add(Dropout(0.25))
-    model.add(Convolution2D(20, (3, 3), activation='relu', input_shape=(64, 64, 1), padding='same'))
-    model.add(Flatten())
-    model.add(Dense(1024))
+    model = get_model()
+    model.fit(x_train, y_train, batch_size=32, epochs=1, verbose=1)
 
-    # 8. Compile model
-    model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
-
-    # 9. Fit model on training data
-    model.fit(x_train, y_train, batch_size=32, epochs=1, verbose=1, validation_split=0.05)
+    if weights_file:
+        print('Saving weights')
+        model.save(weights_file)
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-w', '--weights', dest='weights_file', help='Save weights to file', default='weights.h5')
+
+    args = parser.parse_args()
+
+    train(weights_file=args.weights_file)
+
+
+
+
