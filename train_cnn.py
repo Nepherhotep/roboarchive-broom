@@ -8,7 +8,7 @@ import os
 import h5py
 import numpy as np
 
-from cnn import get_model
+from cnn import get_cnn
 
 
 class XTileLoader:
@@ -64,27 +64,28 @@ def load_data(x_path, y_path):
     return x_train, y_train
 
 
-def train(weights_file):
+def train(cnn_name, weights_file):
     np.random.seed(123)  # for reproducibility
 
     x_train, y_train = load_data('samples-raw', 'samples-clean')
 
     print('Creating CNN')
 
-    model = get_model()
-    model.fit(x_train, y_train, batch_size=32, epochs=5, verbose=1)
+    cnn = get_cnn(cnn_name)
+    cnn.model.fit(x_train, y_train, batch_size=32, epochs=5, verbose=1)
 
     if weights_file:
         print('Saving weights')
-        model.save(weights_file)
+        cnn.save(weights_file)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-w', '--weights', dest='weights_file', help='Save weights to file', default='weights.h5')
+    parser.add_argument('-c', '--cnn', dest='cnn_name', choices=['simple', 'unet'], help='CNN', required=True)
 
     args = parser.parse_args()
 
-    train(weights_file=args.weights_file)
+    train(args.cnn_name, weights_file=args.weights_file)
 
 
