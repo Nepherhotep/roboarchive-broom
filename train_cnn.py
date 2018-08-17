@@ -1,4 +1,5 @@
 import argparse
+import matplotlib.pyplot as plt
 import functools
 
 import cv2
@@ -30,8 +31,9 @@ class XTileLoader:
             tile = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
             tile = tile.reshape(self.get_shape())
             train_data[i] = tile
-            train_data = train_data.astype('float32')
-            train_data /= 255
+
+        train_data = train_data.astype('float32')
+        train_data /= 255
 
         return train_data
 
@@ -44,31 +46,6 @@ class YTileLoader(XTileLoader):
         return (self.tile_size * self.tile_size,)
 
 
-def cache_train_data(filename):
-    """
-    Cache loading images into hd5f file to speedup loading
-    """
-    def deco(fun):
-        def new_func(*args, **kwargs):
-            if os.path.exists(filename):
-                h5f = h5py.File(filename, 'r')
-                x_train = h5f['x_train'][:]
-                y_train = h5f['y_train'][:]
-                h5f.close()
-                return x_train, y_train
-            else:
-                x_train, y_train = fun(*args, **kwargs)
-
-                h5f = h5py.File(filename, 'w')
-                h5f.create_dataset('x_train', data=x_train)
-                h5f.create_dataset('y_train', data=y_train)
-                h5f.close()
-                return x_train, y_train
-        return new_func
-    return deco
-
-
-@cache_train_data('train_data.hdf5')
 def load_data(x_path, y_path):
     """
     Check raw/clean (X/Y) data consistency and load data array
@@ -78,14 +55,11 @@ def load_data(x_path, y_path):
 
     assert raw_files == clean_files, 'X/Y files are not the same'
 
-    print('Loading y train data')
-    y_train = YTileLoader(y_path, 32).load()
-
     print('Loading x train data')
     x_train = XTileLoader(x_path, 64).load()
 
-    print(y_train)
-    # print(x_train)
+    print('Loading y train data')
+    y_train = YTileLoader(y_path, 32).load()
 
     return x_train, y_train
 
