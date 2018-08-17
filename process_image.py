@@ -1,11 +1,26 @@
 import argparse
 import numpy as np
+from matplotlib import pyplot as plt
 
 import cv2
 
 from cnn import get_model
 from split_image import slice_tile
 
+
+def input_img_to_cnn(tile, tile_size, padding):
+    tile = tile.astype('float32')
+    tile = tile.reshape((tile_size + 2 * padding, tile_size + 2 * padding, 1))
+    tile /= 255
+    return tile
+
+
+def cnn_output_to_img(arr, tile_size):
+    tile = arr.reshape((tile_size, tile_size))
+    tile *= 255
+    tile = tile.clip(0, 255)
+    tile = tile.astype(np.uint8)
+    return tile
 
 
 def process_file(weights_file, input_file, output_file, scale_to_width=1024, tile_size=32, padding=16, bg_color=0):
@@ -19,30 +34,37 @@ def process_file(weights_file, input_file, output_file, scale_to_width=1024, til
 
     width = scale_to_width
     height = int(width * h / w)
-    resized = cv2.resize(img, dsize=(width, height), interpolation=cv2.INTER_AREA)
-    resized = resized
+    img = cv2.resize(img, dsize=(width, height), interpolation=cv2.INTER_AREA)
 
-    output_file = np.zeros(resized.shape)
-
+    output_img = np.zeros(img.shape)
 
     i = 0
     j = 0
 
-    while tile_size * i < width:
-        while tile_size * j < height:
-            tile_img = slice_tile(resized, i, j, tile_size, padding, bg_color=bg_color)
+    while tile_size * (i * 1) < width:
+        while tile_size * (j + 1) < height:
+            tile = slice_tile(img, i, j, tile_size, padding, bg_color=bg_color)
 
+            # convert to CNN format
+            cnn_tile = input_img_to_cnn(tile, tile_size, padding)
+
+            # process output
+            out_arr = fake_processing(cnn_tile)
+
+            # convert to img format
+            out_tile = cnn_output_to_img(out_arr, tile_size)
+
+            output_img[j * tile_size:(j + 1) * tile_size, i * tile_size:(i + 1) * tile_size] = out_tile
 
             j += 1
         i += 1
         j = 0
 
-
+    cv2.imwrite(output_file, output_img)
 
 
 def fake_processing(tile):
-    return tile[16:48, 16:48]
-
+    return tile[16:48, 16:48].flatten()
 
 
 if __name__ == '__main__':
