@@ -37,6 +37,7 @@ def process_file(weights_file, input_file, output_file, scale_to_width=1024, til
     img = cv2.resize(img, dsize=(width, height), interpolation=cv2.INTER_AREA)
 
     output_img = np.zeros(img.shape)
+    cnn = CNN(weights_file)
 
     i = 0
     j = 0
@@ -49,7 +50,8 @@ def process_file(weights_file, input_file, output_file, scale_to_width=1024, til
             cnn_tile = input_img_to_cnn(tile, tile_size, padding)
 
             # process output
-            out_arr = fake_processing(cnn_tile)
+            print('processing tile {}, {}'.format(i, j))
+            out_arr = cnn.process_tile(cnn_tile)
 
             # convert to img format
             out_tile = cnn_output_to_img(out_arr, tile_size)
@@ -73,7 +75,9 @@ class CNN:
         self.model.load_weights(weight_file)
 
     def process_tile(self, tile):
-        return self.model.predict(tile)
+        tiles = np.zeros((1,) + tile.shape)
+        tiles[0] = tile
+        return self.model.predict(tiles)
 
 
 if __name__ == '__main__':

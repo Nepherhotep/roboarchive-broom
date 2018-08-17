@@ -72,7 +72,7 @@ def train(weights_file):
     print('Creating CNN')
 
     model = get_model()
-    model.fit(x_train, y_train, batch_size=32, epochs=1, verbose=1)
+    model.fit(x_train, y_train, batch_size=32, epochs=2, verbose=1)
 
     if weights_file:
         print('Saving weights')
