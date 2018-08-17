@@ -67,6 +67,15 @@ def fake_processing(tile):
     return tile[16:48, 16:48].flatten()
 
 
+class CNN:
+    def __init__(self, weight_file):
+        self.model = get_model()
+        self.model.load_weights(weight_file)
+
+    def process_tile(self, tile):
+        return self.model.predict(tile)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input-file', dest='input_file', help='Input file to process', required=True)
