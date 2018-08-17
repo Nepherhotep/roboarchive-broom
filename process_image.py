@@ -52,6 +52,7 @@ def process_file(weights_file, input_file, output_file, scale_to_width=1024, til
             # process output
             print('processing tile {}, {}'.format(i, j))
             out_arr = cnn.process_tile(cnn_tile)
+            # out_arr = fake_processing(cnn_tile)
 
             # convert to img format
             out_tile = cnn_output_to_img(out_arr, tile_size)
