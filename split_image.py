@@ -34,8 +34,8 @@ def slice_tile(img, i, j, tile_size, padding, bg_color=0):
     h, w = tile.shape
     if h < full_size or w < full_size:
         bg = numpy.full((full_size, full_size), bg_color, numpy.uint8)
-
         bg[top_offset : top_offset + h, left_offset : left_offset + w] = tile
+        # print(f'Return: {h}/{w} => {tile.shape} IN {i} {j} / Color: {bg_color}')
         return bg, (h, w)
     else:
         return tile, (h, w)

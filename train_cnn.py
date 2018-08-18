@@ -5,6 +5,7 @@ import os
 
 import h5py
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
@@ -46,13 +47,6 @@ class XTileLoader:
 
 class SplitTileLoader(XTileLoader):
 
-    def display(self, img):
-        def _batch(inp):
-            b = np.zeros((1, 256, 256, 1), dtype='float32')
-            b[0] = inp
-            return b
-        display(_batch(img))
-
     def split_image(self, path):
         tile_size = self.tile_size
         print(f'Load: {path}')
@@ -68,6 +62,9 @@ class SplitTileLoader(XTileLoader):
                     j += 1
                     continue
                 # convert to CNN format
+                # TODO: why image with all 255 is black?
+                if tile[0][0] == 255:
+                    tile[0][0] = 254
                 cnn_tile = self.cnn.input_img_to_cnn(tile, tile_size)
                 yield cnn_tile
                 j += 1
@@ -173,7 +170,7 @@ def display(*images):
     for image in images:
         if len(image.shape) == 4:
             image = image[0, :, :, 0]
-        plt.imshow(image)
+        plt.imshow(image, cmap=cm.gray)
     plt.show()
 
 
