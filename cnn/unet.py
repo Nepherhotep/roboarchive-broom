@@ -84,5 +84,5 @@ def UNet(
 class UnetCNN(BaseCNN):
     def get_model(self):
         model = UNet((256, 256, 1))
-        model.compile(optimizer=Adam(lr=1e-4), loss="binary_crossentropy", metrics=["accuracy"])
+        model.compile(optimizer=Adam(lr=1e-3), loss="binary_crossentropy", metrics=["accuracy"])
         return model
