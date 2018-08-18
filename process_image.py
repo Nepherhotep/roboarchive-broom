@@ -37,9 +37,12 @@ class FileProcessor:
         i = 0
         j = 0
 
-        while tile_size * (i * 1) < width:
-            while tile_size * (j + 1) < height:
-                tile = slice_tile(img, i, j, tile_size, args.padding, bg_color=bg_color)
+        while tile_size * (i * 1) < (width + tile_size):
+            while tile_size * (j + 1) < (height + tile_size):
+                tile, orig_size = slice_tile(img, i, j, tile_size, args.padding, bg_color=bg_color)
+                if not orig_size[0] or not orig_size[1]:
+                    j += 1
+                    continue
 
                 # convert to CNN format
                 cnn_tile = cnn.input_img_to_cnn(tile, tile_size, args.padding)
@@ -54,7 +57,7 @@ class FileProcessor:
 
                 output_img[
                     j * tile_size : (j + 1) * tile_size, i * tile_size : (i + 1) * tile_size
-                ] = out_tile
+                ] = out_tile[:orig_size[0], :orig_size[1]]
 
                 j += 1
             i += 1

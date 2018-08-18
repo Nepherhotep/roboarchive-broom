@@ -36,9 +36,9 @@ def slice_tile(img, i, j, tile_size, padding, bg_color=0):
         bg = numpy.full((full_size, full_size), bg_color, numpy.uint8)
 
         bg[top_offset : top_offset + h, left_offset : left_offset + w] = tile
-        return bg
+        return bg, (h, w)
     else:
-        return tile
+        return tile, (h, w)
 
 
 def split(filename, scale_to_width=1024, tile_size=32, padding=16, output_dir='split', bg_color=0):
@@ -61,7 +61,7 @@ def split(filename, scale_to_width=1024, tile_size=32, padding=16, output_dir='s
         while tile_size * j < height:
             tile_file = os.path.join(output_dir, 'tile-{}-{}.png'.format(i, j))
 
-            tile_img = slice_tile(resized, i, j, tile_size, padding, bg_color=bg_color)
+            tile_img, _orig = slice_tile(resized, i, j, tile_size, padding, bg_color=bg_color)
 
             cv2.imwrite(tile_file, tile_img)
             j += 1
