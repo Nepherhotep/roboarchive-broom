@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-import numpy
+import argparse
 import os
 import sys
-import argparse
+
+import numpy
 
 import cv2
 
@@ -34,7 +35,7 @@ def slice_tile(img, i, j, tile_size, padding, bg_color=0):
     if h < full_size or w < full_size:
         bg = numpy.full((full_size, full_size), bg_color, numpy.uint8)
 
-        bg[top_offset:top_offset + h, left_offset: left_offset + w] = tile
+        bg[top_offset : top_offset + h, left_offset : left_offset + w] = tile
         return bg
     else:
         return tile
@@ -72,17 +73,36 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-o', '--out-dir', default='split', dest='out_dir', help='Output directory')
     parser.add_argument('-i', '--image-file', required=True, dest='image_file', help='Image file')
-    parser.add_argument('-t', '--tile-size', dest='tile_size', default='32', type=int, help='Tile size')
-    parser.add_argument('-p', '--padding', dest='padding', default='16', type=int,
-                        help='Additional padding around the tile')
-    parser.add_argument('-b', '--background-color', dest='background_color', default='0', type=int,
-                        help='Background color from 0 to 255')
+    parser.add_argument(
+        '-t', '--tile-size', dest='tile_size', default='32', type=int, help='Tile size'
+    )
+    parser.add_argument(
+        '-p',
+        '--padding',
+        dest='padding',
+        default='16',
+        type=int,
+        help='Additional padding around the tile',
+    )
+    parser.add_argument(
+        '-b',
+        '--background-color',
+        dest='background_color',
+        default='0',
+        type=int,
+        help='Background color from 0 to 255',
+    )
 
     args = parser.parse_args()
     if os.path.isfile(args.image_file):
         if not os.path.exists(args.out_dir):
             os.mkdir(args.out_dir)
-        split(args.image_file, tile_size=args.tile_size, padding=args.padding, output_dir=args.out_dir,
-              bg_color=args.background_color)
+        split(
+            args.image_file,
+            tile_size=args.tile_size,
+            padding=args.padding,
+            output_dir=args.out_dir,
+            bg_color=args.background_color,
+        )
     else:
         sys.exit('File {} does not exist'.format(args.image_file))

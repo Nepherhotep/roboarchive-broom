@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 import argparse
-import matplotlib.pyplot as plt
 import functools
-
-import cv2
 import os
 
 import h5py
+import matplotlib.pyplot as plt
 import numpy as np
 
+import cv2
 from cnn import get_cnn
 
 
@@ -16,6 +15,7 @@ class XTileLoader:
     """
     Load square tiles with channel
     """
+
     def __init__(self, tiles_dir, tile_size):
         self.tiles_dir = tiles_dir
         self.tile_size = tile_size
@@ -43,6 +43,7 @@ class YTileLoader(XTileLoader):
     """
     Load tile as flat array without channel
     """
+
     def get_shape(self):
         return (self.tile_size * self.tile_size,)
 
@@ -82,11 +83,13 @@ def train(cnn_name, weights_file):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-w', '--weights', dest='weights_file', help='Save weights to file', default='weights.h5')
-    parser.add_argument('-c', '--cnn', dest='cnn_name', choices=['simple', 'unet'], help='CNN', required=True)
+    parser.add_argument(
+        '-w', '--weights', dest='weights_file', help='Save weights to file', default='weights.h5'
+    )
+    parser.add_argument(
+        '-c', '--cnn', dest='cnn_name', choices=['simple', 'unet'], help='CNN', required=True
+    )
 
     args = parser.parse_args()
 
     train(args.cnn_name, weights_file=args.weights_file)
-
-

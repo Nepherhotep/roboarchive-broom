@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
 import argparse
+
 import numpy as np
 from matplotlib import pyplot as plt
 
 import cv2
-
 from cnn import get_cnn
 from split_image import slice_tile
 
 
 class FileProcessor:
-
-    def process(self, cnn_name, weights_file, input_file, output_file, scale_to_width=1024, tile_size=32, padding=16,
-                bg_color=0):
+    def process(
+        self,
+        cnn_name,
+        weights_file,
+        input_file,
+        output_file,
+        scale_to_width=1024,
+        tile_size=32,
+        padding=16,
+        bg_color=0,
+    ):
         """
         Scale image to width 1024, convert to grayscale and than slice by tiles.
         It's possible to slice image with padding and each tile will contain pixels from surrounding tiles
@@ -47,7 +55,9 @@ class FileProcessor:
                 # convert to img format
                 out_tile = cnn.cnn_output_to_img(out_arr, tile_size)
 
-                output_img[j * tile_size:(j + 1) * tile_size, i * tile_size:(i + 1) * tile_size] = out_tile
+                output_img[
+                    j * tile_size : (j + 1) * tile_size, i * tile_size : (i + 1) * tile_size
+                ] = out_tile
 
                 j += 1
             i += 1
@@ -62,11 +72,23 @@ def fake_processing(tile):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input-file', dest='input_file', help='Input file to process', required=True)
-    parser.add_argument('-c', '--cnn', dest='cnn_name', choices=['simple', 'unet'], help='CNN', required=True)
+    parser.add_argument(
+        '-i', '--input-file', dest='input_file', help='Input file to process', required=True
+    )
+    parser.add_argument(
+        '-c', '--cnn', dest='cnn_name', choices=['simple', 'unet'], help='CNN', required=True
+    )
 
-    parser.add_argument('-o', '--output-file', dest='output_file', help='Processed output file', default='output.png')
-    parser.add_argument('-w', '--weights', dest='weights_file', help='Save weights to file', default='weights.h5')
+    parser.add_argument(
+        '-o',
+        '--output-file',
+        dest='output_file',
+        help='Processed output file',
+        default='output.png',
+    )
+    parser.add_argument(
+        '-w', '--weights', dest='weights_file', help='Save weights to file', default='weights.h5'
+    )
 
     args = parser.parse_args()
 
