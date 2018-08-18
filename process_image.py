@@ -87,7 +87,6 @@ if __name__ == '__main__':
         default='output.png',
     )
     parser.add_argument('-d', '--display', action='store_true')
-    parser.add_argument('-b', '--batch-size', default=4, type=int)
     parser.add_argument('--padding', default=16, type=int)  # maybe 0
 
     args = parser.parse_args()

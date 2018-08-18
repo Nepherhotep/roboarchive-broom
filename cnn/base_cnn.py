@@ -17,7 +17,7 @@ class BaseCNN:
 
     @property
     def input_size(self):
-        return self.model.shape[1:3].as_list()
+        return self.model.input.shape[1:3].as_list()
 
     @property
     def tile_size(self):

@@ -8,4 +8,6 @@ def get_cnn(args):
     elif args.cnn_name == 'unet':
         return UnetCNN(args)
     else:
+        if not args.cnn_name:
+            raise Exception(f'You should specify cnn_name via: -c/-cnn or CNN_NAME env variable')
         raise Exception('unknown name {}'.format(args.cnn_name))

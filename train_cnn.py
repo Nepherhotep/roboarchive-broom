@@ -61,10 +61,10 @@ def load_data(x_path, y_path):
     assert raw_files == clean_files, 'X/Y files are not the same'
 
     print('Loading x train data')
-    x_train = XTileLoader(x_path, 64).load()
+    x_train = XTileLoader(x_path, 256).load()
 
     print('Loading y train data')
-    y_train = YTileLoader(y_path, 32).load()
+    y_train = XTileLoader(y_path, 256).load()
 
     return x_train, y_train
 
@@ -106,7 +106,8 @@ def add_common_arguments(parser):
         '-w', '--weights', dest='weights_file', help='Save weights to file', default='weights.h5'
     )
     parser.add_argument(
-        '-c', '--cnn', dest='cnn_name', choices=['simple', 'unet'], help='CNN', required=True
+        '-c', '--cnn', dest='cnn_name', choices=['simple', 'unet'], help='CNN',
+        default=os.environ.get('CNN_NAME')
     )
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('-b', '--batch-size', default=4, type=int)
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     add_common_arguments(parser)
     parser.add_argument('--best', action='store_true')
-    parser.add_argument('--period', default=2, type=int)
+    parser.add_argument('--period', default=1, type=int)
     parser.add_argument('-e', '--epochs', default=5000, type=int)
 
     args = parser.parse_args()
