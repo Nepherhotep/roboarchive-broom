@@ -9,18 +9,6 @@ from split_image import slice_tile
 
 
 class FileProcessor:
-    def input_img_to_cnn(self, tile, tile_size, padding):
-        tile = tile.astype('float32')
-        tile = tile.reshape((tile_size + 2 * padding, tile_size + 2 * padding, 1))
-        tile /= 255
-        return tile
-
-    def cnn_output_to_img(self, arr, tile_size):
-        tile = arr.reshape((tile_size, tile_size))
-        tile *= 255
-        tile = tile.clip(0, 255)
-        tile = tile.astype(np.uint8)
-        return tile
 
     def process(self, cnn_name, weights_file, input_file, output_file, scale_to_width=1024, tile_size=32, padding=16,
                 bg_color=0):
@@ -49,14 +37,14 @@ class FileProcessor:
                 tile = slice_tile(img, i, j, tile_size, padding, bg_color=bg_color)
 
                 # convert to CNN format
-                cnn_tile = self.input_img_to_cnn(tile, tile_size, padding)
+                cnn_tile = cnn.input_img_to_cnn(tile, tile_size, padding)
 
                 # process output
                 print('processing tile {}, {}'.format(i, j))
                 out_arr = cnn.process_tile(cnn_tile)
 
                 # convert to img format
-                out_tile = self.cnn_output_to_img(out_arr, tile_size)
+                out_tile = cnn.cnn_output_to_img(out_arr, tile_size)
 
                 output_img[j * tile_size:(j + 1) * tile_size, i * tile_size:(i + 1) * tile_size] = out_tile
 
