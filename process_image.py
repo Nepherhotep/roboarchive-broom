@@ -13,13 +13,7 @@ class FileProcessor:
     def process(
         self,
         args,
-        cnn_name,
-        weights_file,
-        input_file,
-        output_file,
         scale_to_width=1024,
-        tile_size=32,
-        padding=16,
         bg_color=0,
     ):
         """
@@ -27,7 +21,10 @@ class FileProcessor:
         It's possible to slice image with padding and each tile will contain pixels from surrounding tiles
         """
         configure_backend(args)
-        img = cv2.imread(input_file, cv2.IMREAD_GRAYSCALE)
+        cnn = get_cnn(args)
+
+        tile_size = cnn.tile_size
+        img = cv2.imread(args.input_file, cv2.IMREAD_GRAYSCALE)
 
         h, w = img.shape
 
@@ -37,17 +34,15 @@ class FileProcessor:
 
         output_img = np.zeros(img.shape)
 
-        cnn = get_cnn(args)
-
         i = 0
         j = 0
 
         while tile_size * (i * 1) < width:
             while tile_size * (j + 1) < height:
-                tile = slice_tile(img, i, j, tile_size, padding, bg_color=bg_color)
+                tile = slice_tile(img, i, j, tile_size, args.padding, bg_color=bg_color)
 
                 # convert to CNN format
-                cnn_tile = cnn.input_img_to_cnn(tile, tile_size, padding)
+                cnn_tile = cnn.input_img_to_cnn(tile, tile_size, args.padding)
 
                 # process output
                 print('processing tile {}, {}'.format(i, j))
@@ -65,7 +60,7 @@ class FileProcessor:
             i += 1
             j = 0
 
-        cv2.imwrite(output_file, output_img)
+        cv2.imwrite(args.output_file, output_img)
         display(output_img)
 
 
@@ -89,8 +84,9 @@ if __name__ == '__main__':
     )
     parser.add_argument('-d', '--display', action='store_true')
     parser.add_argument('-b', '--batch-size', default=4, type=int)
+    parser.add_argument('--padding', default=16, type=int)  # maybe 0
 
     args = parser.parse_args()
 
     p = FileProcessor()
-    p.process(args, args.cnn_name, args.weights_file, args.input_file, args.output_file)
+    p.process(args)

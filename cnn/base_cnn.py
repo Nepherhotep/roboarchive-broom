@@ -15,18 +15,27 @@ class BaseCNN:
             self.load(args.weights_file)
         self.model.summary()
 
+    @property
+    def input_size(self):
+        return self.model.shape[1:3].as_list()
+
+    @property
+    def tile_size(self):
+        return self.input_size[0]
+
     def get_model(self):
         raise NotImplementedError
 
+    # TODO: fix, add batch_size here and support multiple tiles
     def process_tile(self, tile):
-        tiles = np.zeros((1,) + tile.shape)
+        tiles = np.zeros((1,) + tile.shape)  # reshape example
         tiles[0] = tile
-        # TODO: fix, add args and batch_size here
         return self.model.predict(tiles)
 
     def load(self, filename):
         self.model.load_weights(filename)
 
+    # TODO: we can remove this
     def save(self, filename):
         self.model.save_weights(filename)
 
