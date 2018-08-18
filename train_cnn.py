@@ -78,6 +78,23 @@ def configure_backend(args):
     K.set_session(sess)
 
 
+def data_generator(args, model):
+    def _batch(inp):
+        b = np.zeros((1, *model.input_size, 1), dtype='float32')
+        b[0] = inp
+        return b
+    x_train, y_train = load_data('samples-raw', 'samples-clean')
+    while True:
+        c = 0
+        for x, y in zip(x_train, y_train):
+            yield _batch(x), _batch(y)
+            c += 1
+            if c % 7 == 0 or c % 10 == 0:
+                by = _batch(y)
+                yield by, by
+
+
+
 def train(args):
     configure_backend(args)
 
@@ -91,10 +108,9 @@ def train(args):
     model_checkpoint = ModelCheckpoint(
         args.weights_file, monitor='acc', verbose=1, save_best_only=args.best, period=args.period
     )
-    cnn.model.fit(
-        x_train,
-        y_train,
-        batch_size=args.batch_size,
+    cnn.model.fit_generator(
+        data_generator(args, cnn),
+        steps_per_epoch=args.epoch_steps,
         epochs=args.epochs,
         verbose=1,
         callbacks=[model_checkpoint],
@@ -127,6 +143,7 @@ if __name__ == '__main__':
     parser.add_argument('--best', action='store_true')
     parser.add_argument('--period', default=1, type=int)
     parser.add_argument('-e', '--epochs', default=5000, type=int)
+    parser.add_argument('--epoch-steps', default=16, type=int)
 
     args = parser.parse_args()
 
