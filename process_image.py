@@ -64,7 +64,8 @@ class FileProcessor:
             j = 0
 
         cv2.imwrite(args.output_file, output_img)
-        display(output_img)
+        if args.display:
+            display(output_img)
 
 
 def fake_processing(tile):
