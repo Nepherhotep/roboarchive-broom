@@ -1,3 +1,5 @@
+import os
+
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Convolution2D
@@ -6,12 +8,20 @@ import numpy as np
 
 
 class BaseCNN:
-    def __init__(self):
-        self.model = None
+    def __init__(self, args):
+        self.args = args
+        self.model = self.get_model()
+        if os.path.exists(args.weights_file):
+            self.load(args.weights_file)
+        self.model.summary()
+
+    def get_model(self):
+        raise NotImplementedError
 
     def process_tile(self, tile):
         tiles = np.zeros((1,) + tile.shape)
         tiles[0] = tile
+        # TODO: fix, add args and batch_size here
         return self.model.predict(tiles)
 
     def load(self, filename):

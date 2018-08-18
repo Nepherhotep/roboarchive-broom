@@ -6,6 +6,9 @@ import os
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
+import tensorflow as tf
+from keras import backend as K
+from keras.callbacks import ModelCheckpoint
 
 import cv2
 from cnn import get_cnn
@@ -66,30 +69,64 @@ def load_data(x_path, y_path):
     return x_train, y_train
 
 
-def train(cnn_name, weights_file):
+def configure_backend(args):
+    config = tf.ConfigProto()
+    # config.gpu_options.allow_growth = True
+    if args.cpu:
+        config.device_count['GPU'] = 0
+    sess = tf.Session(config=config)
+    K.set_session(sess)
+
+
+def train(args):
+    configure_backend(args)
+
     np.random.seed(123)  # for reproducibility
 
     x_train, y_train = load_data('samples-raw', 'samples-clean')
 
     print('Creating CNN')
 
-    cnn = get_cnn(cnn_name)
-    cnn.model.fit(x_train, y_train, batch_size=32, epochs=5, verbose=1)
+    cnn = get_cnn(args)
+    model_checkpoint = ModelCheckpoint(
+        args.weights_file, monitor='acc', verbose=1, save_best_only=args.best, period=args.period
+    )
+    cnn.model.fit(
+        x_train,
+        y_train,
+        batch_size=args.batch_size,
+        epochs=args.epochs,
+        verbose=1,
+        callbacks=[model_checkpoint],
+    )
 
-    if weights_file:
-        print('Saving weights')
-        cnn.save(weights_file)
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+def add_common_arguments(parser):
     parser.add_argument(
         '-w', '--weights', dest='weights_file', help='Save weights to file', default='weights.h5'
     )
     parser.add_argument(
         '-c', '--cnn', dest='cnn_name', choices=['simple', 'unet'], help='CNN', required=True
     )
+    parser.add_argument('--cpu', action='store_true')
+    parser.add_argument('-b', '--batch-size', default=4, type=int)
+
+
+def display(*images):
+    for image in images:
+        if len(image.shape) == 4:
+            image = image[0, :, :, 0]
+        plt.imshow(image)
+    plt.show()
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    add_common_arguments(parser)
+    parser.add_argument('--best', action='store_true')
+    parser.add_argument('--period', default=2, type=int)
+    parser.add_argument('-e', '--epochs', default=5000, type=int)
 
     args = parser.parse_args()
 
-    train(args.cnn_name, weights_file=args.weights_file)
+    train(args)

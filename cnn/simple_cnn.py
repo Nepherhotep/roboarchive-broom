@@ -6,7 +6,7 @@ from .base_cnn import BaseCNN
 
 
 class SimpleCNN(BaseCNN):
-    def __init__(self):
+    def get_model(self):
         model = Sequential()
 
         model.add(Convolution2D(20, (3, 3), activation='relu', input_shape=(64, 64, 1), padding='same'))
@@ -17,3 +17,4 @@ class SimpleCNN(BaseCNN):
 
         model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
         self.model = model
+        return model

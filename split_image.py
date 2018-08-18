@@ -98,6 +98,7 @@ if __name__ == '__main__':
         if not os.path.exists(args.out_dir):
             os.mkdir(args.out_dir)
         split(
+            args,
             args.image_file,
             tile_size=args.tile_size,
             padding=args.padding,
