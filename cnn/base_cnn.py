@@ -39,7 +39,7 @@ class BaseCNN:
     def save(self, filename):
         self.model.save_weights(filename)
 
-    def input_img_to_cnn(self, tile, tile_size, padding):
+    def input_img_to_cnn(self, tile, tile_size, padding=0):
         tile = tile.astype('float32')
         tile = tile.reshape((tile_size + 2 * padding, tile_size + 2 * padding, 1))
         tile /= 255

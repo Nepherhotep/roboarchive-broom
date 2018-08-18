@@ -12,6 +12,7 @@ from keras.callbacks import ModelCheckpoint
 
 import cv2
 from cnn import get_cnn
+from split_image import slice_tile
 
 
 class XTileLoader:
@@ -19,7 +20,8 @@ class XTileLoader:
     Load square tiles with channel
     """
 
-    def __init__(self, tiles_dir, tile_size):
+    def __init__(self, cnn, tiles_dir, tile_size):
+        self.cnn = cnn
         self.tiles_dir = tiles_dir
         self.tile_size = tile_size
 
@@ -42,6 +44,41 @@ class XTileLoader:
         return train_data
 
 
+class SplitTileLoader(XTileLoader):
+
+    def display(self, img):
+        def _batch(inp):
+            b = np.zeros((1, 256, 256, 1), dtype='float32')
+            b[0] = inp
+            return b
+        display(_batch(img))
+
+    def split_image(self, path):
+        tile_size = self.tile_size
+        print(f'Load: {path}')
+        img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+        height, width = img.shape
+        i = 0
+        j = 0
+
+        while tile_size * (i * 1) < (width+tile_size):
+            while tile_size * (j + 1) < (height+tile_size):
+                tile, orig_size = slice_tile(img, i, j, tile_size, 0, bg_color=255)
+                if not orig_size[0] or not orig_size[1]:
+                    j += 1
+                    continue
+                # convert to CNN format
+                cnn_tile = self.cnn.input_img_to_cnn(tile, tile_size)
+                yield cnn_tile
+                j += 1
+            i += 1
+            j = 0
+
+    def load(self):
+        for fname in sorted(os.listdir(self.tiles_dir)):
+            yield from self.split_image(os.path.join(self.tiles_dir, fname))
+
+
 class YTileLoader(XTileLoader):
     """
     Load tile as flat array without channel
@@ -51,7 +88,7 @@ class YTileLoader(XTileLoader):
         return (self.tile_size * self.tile_size,)
 
 
-def load_data(x_path, y_path):
+def load_data(args, cnn, x_path, y_path):
     """
     Check raw/clean (X/Y) data consistency and load data array
     """
@@ -59,6 +96,9 @@ def load_data(x_path, y_path):
     clean_files = sorted(os.listdir(y_path))
 
     assert raw_files == clean_files, 'X/Y files are not the same'
+    x_train = list(SplitTileLoader(cnn, x_path, 256).load())
+    y_train = list(SplitTileLoader(cnn, y_path, 256).load())
+    return x_train, y_train
 
     print('Loading x train data')
     x_train = XTileLoader(x_path, 256).load()
@@ -83,25 +123,25 @@ def data_generator(args, model):
         b = np.zeros((1, *model.input_size, 1), dtype='float32')
         b[0] = inp
         return b
-    x_train, y_train = load_data('samples-raw', 'samples-clean')
+    x_train, y_train = load_data(args, model, 'train/raw/samples', 'train/clean/samples')
+    print(f'Splitted samples length: {len(x_train)}')
     while True:
         c = 0
         for x, y in zip(x_train, y_train):
-            yield _batch(x), _batch(y)
+            x, y = _batch(x), _batch(y)
+            if args.display:
+                display(x)
+                display(y)
+            yield x, y
             c += 1
             if c % 7 == 0 or c % 10 == 0:
-                by = _batch(y)
-                yield by, by
-
+                yield y, y
 
 
 def train(args):
     configure_backend(args)
 
     np.random.seed(123)  # for reproducibility
-
-    x_train, y_train = load_data('samples-raw', 'samples-clean')
-
     print('Creating CNN')
 
     cnn = get_cnn(args)
@@ -144,6 +184,7 @@ if __name__ == '__main__':
     parser.add_argument('--period', default=1, type=int)
     parser.add_argument('-e', '--epochs', default=5000, type=int)
     parser.add_argument('--epoch-steps', default=16, type=int)
+    parser.add_argument('-d', '--display', action='store_true')
 
     args = parser.parse_args()
 
