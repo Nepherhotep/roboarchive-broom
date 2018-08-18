@@ -13,7 +13,6 @@ class FileProcessor:
     def process(
         self,
         args,
-        scale_to_width=1024,
         bg_color=0,
     ):
         """
@@ -28,8 +27,11 @@ class FileProcessor:
 
         h, w = img.shape
 
-        width = scale_to_width
-        height = int(width * h / w)
+        if args.scale:
+            width = args.scale
+            height = int(width * h / w)
+        else:
+            width, height = w, h
         img = cv2.resize(img, dsize=(width, height), interpolation=cv2.INTER_AREA)
 
         output_img = np.zeros(img.shape)
@@ -88,6 +90,7 @@ if __name__ == '__main__':
     )
     parser.add_argument('-d', '--display', action='store_true')
     parser.add_argument('--padding', default=16, type=int)  # maybe 0
+    parser.add_argument('--scale', default=None, type=int)  # maybe 0
 
     args = parser.parse_args()
 
