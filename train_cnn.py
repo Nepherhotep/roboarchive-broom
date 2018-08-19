@@ -146,7 +146,7 @@ def data_generator(args, model):
 def train(args):
     configure_backend(args)
 
-    np.random.seed(123)  # for reproducibility
+    # np.random.seed(123)  # for reproducibility
     print('Creating CNN')
 
     cnn = get_cnn(args)
