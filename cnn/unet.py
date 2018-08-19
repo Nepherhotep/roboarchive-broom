@@ -68,7 +68,7 @@ def UNet(
     inc_rate=2.,
     activation='relu',
     dropout=0.5,
-    batchnorm=False,
+    batchnorm=True,
     maxpool=True,
     upconv=True,
     residual=False,
