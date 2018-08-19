@@ -2,6 +2,7 @@
 import argparse
 import functools
 import os
+from glob import glob
 
 import h5py
 import matplotlib.pyplot as plt
@@ -21,7 +22,8 @@ class XTileLoader:
     Load square tiles with channel
     """
 
-    def __init__(self, cnn, tiles_dir, tile_size):
+    def __init__(self, args, cnn, tiles_dir, tile_size):
+        self.args = args
         self.cnn = cnn
         self.tiles_dir = tiles_dir
         self.tile_size = tile_size
@@ -30,7 +32,7 @@ class XTileLoader:
         return (self.tile_size, self.tile_size, 1)
 
     def load(self):
-        tiles_list = sorted(os.listdir(self.tiles_dir))
+        tiles_list = self.file_name()
         shape = (len(tiles_list),) + self.get_shape()
         train_data = np.zeros(shape)
         for i, fname in enumerate(tiles_list):
@@ -43,6 +45,14 @@ class XTileLoader:
         train_data /= 255
 
         return train_data
+
+    def file_names(self):
+        if not self.args.filter:
+            src = os.listdir(self.tiles_dir)
+        else:
+            src = glob(os.path.join(self.tiles_dir, self.args.filter))
+        for fname in src:
+            yield os.path.basename(fname)
 
 
 class SplitTileLoader(XTileLoader):
@@ -69,7 +79,7 @@ class SplitTileLoader(XTileLoader):
             j = 0
 
     def load(self):
-        for fname in sorted(os.listdir(self.tiles_dir)):
+        for fname in self.file_names():
             yield from self.split_image(os.path.join(self.tiles_dir, fname))
 
 
@@ -90,8 +100,8 @@ def load_data(args, cnn, x_path, y_path):
     clean_files = sorted(os.listdir(y_path))
 
     assert raw_files == clean_files, 'X/Y files are not the same'
-    x_train = list(SplitTileLoader(cnn, x_path, 256).load())
-    y_train = list(SplitTileLoader(cnn, y_path, 256).load())
+    x_train = list(SplitTileLoader(args, cnn, x_path, 256).load())
+    y_train = list(SplitTileLoader(args, cnn, y_path, 256).load())
     return x_train, y_train
 
     print('Loading x train data')
@@ -180,6 +190,7 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--epochs', default=5000, type=int)
     parser.add_argument('--epoch-steps', default=16, type=int)
     parser.add_argument('-d', '--display', action='store_true')
+    parser.add_argument('-f', '--filter')
 
     args = parser.parse_args()
 
