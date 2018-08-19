@@ -5,8 +5,8 @@ import os
 from glob import glob
 
 import h5py
-import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
@@ -56,7 +56,6 @@ class XTileLoader:
 
 
 class SplitTileLoader(XTileLoader):
-
     def split_image(self, path):
         tile_size = self.tile_size
         print(f'Load: {path}')
@@ -65,8 +64,8 @@ class SplitTileLoader(XTileLoader):
         i = 0
         j = 0
 
-        while tile_size * (i * 1) < (width+tile_size):
-            while tile_size * (j + 1) < (height+tile_size):
+        while tile_size * (i * 1) < (width + tile_size):
+            while tile_size * (j + 1) < (height + tile_size):
                 tile, orig_size = slice_tile(img, i, j, tile_size, 0, bg_color=255)
                 if not orig_size[0] or not orig_size[1]:
                     j += 1
@@ -104,14 +103,6 @@ def load_data(args, cnn, x_path, y_path):
     y_train = list(SplitTileLoader(args, cnn, y_path, 256).load())
     return x_train, y_train
 
-    print('Loading x train data')
-    x_train = XTileLoader(x_path, 256).load()
-
-    print('Loading y train data')
-    y_train = XTileLoader(y_path, 256).load()
-
-    return x_train, y_train
-
 
 def configure_backend(args):
     config = tf.ConfigProto()
@@ -122,25 +113,47 @@ def configure_backend(args):
     K.set_session(sess)
 
 
+class Batch:
+    def __init__(self, size, input_size):
+        self.size = size
+        self.input_size = input_size
+        self.imgs = []
+
+    def append(self, img):
+        self.imgs.append(img)
+        if len(self.imgs) >= self.size:
+            b = np.zeros((self.size, *self.input_size, 1), dtype='float32')
+            for idx, img in enumerate(self.imgs):
+                b[idx] = img
+            return b
+
+
 def data_generator(args, model):
     def _batch(inp):
         b = np.zeros((1, *model.input_size, 1), dtype='float32')
         b[0] = inp
         return b
+
     x_train, y_train = load_data(args, model, 'train/raw/samples', 'train/clean/samples')
     print(f'Splitted samples length: {len(x_train)}')
+    bx, by = Batch(args.batch_size, model.input_size), Batch(args.batch_size, model.input_size)
     while True:
         c = 0
         for x, y in zip(x_train, y_train):
-            x, y = _batch(x), _batch(y)
+            outx, outy = bx.append(x), by.append(y)
+            c += 1
+            if c % 7 == 0 or c % 10 == 0:
+                pass
+                # yield y, y
+            if not outx is None:
+                yield outx, outy
+                bx, by = (
+                    Batch(args.batch_size, model.input_size),
+                    Batch(args.batch_size, model.input_size),
+                )
             if args.display:
                 display(x)
                 display(y)
-            yield x, y
-            continue
-            c += 1
-            if c % 7 == 0 or c % 10 == 0:
-                yield y, y
 
 
 def train(args):
@@ -167,8 +180,12 @@ def add_common_arguments(parser):
         '-w', '--weights', dest='weights_file', help='Save weights to file', default='weights.h5'
     )
     parser.add_argument(
-        '-c', '--cnn', dest='cnn_name', choices=['simple', 'unet'], help='CNN',
-        default=os.environ.get('CNN_NAME')
+        '-c',
+        '--cnn',
+        dest='cnn_name',
+        choices=['simple', 'unet'],
+        help='CNN',
+        default=os.environ.get('CNN_NAME'),
     )
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('-b', '--batch-size', default=4, type=int)
