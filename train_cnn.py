@@ -62,9 +62,6 @@ class SplitTileLoader(XTileLoader):
                     j += 1
                     continue
                 # convert to CNN format
-                # TODO: why image with all 255 is black?
-                if tile[0][0] == 255:
-                    tile[0][0] = 254
                 cnn_tile = self.cnn.input_img_to_cnn(tile, tile_size)
                 yield cnn_tile
                 j += 1
@@ -130,6 +127,7 @@ def data_generator(args, model):
                 display(x)
                 display(y)
             yield x, y
+            continue
             c += 1
             if c % 7 == 0 or c % 10 == 0:
                 yield y, y
