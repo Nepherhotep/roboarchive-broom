@@ -128,24 +128,52 @@ class Batch:
             return b
 
 
-def data_generator(args, model):
+def generic_skip(x_data, y_data, cnt, skip_if_zero=True):
+    c = 0
+    out_x, out_y = [], []
+    for x, y in zip(x_data, y_data):
+        c += 1
+        equal_zero = c % cnt == 0
+        if skip_if_zero and equal_zero:
+            continue
+        elif not skip_if_zero and not equal_zero:
+            continue
+        out_x.append(x)
+        out_y.append(y)
+    return out_x, out_y
+
+
+def data_skip(x_data, y_data, cnt):
+    return generic_skip(x_data, y_data, cnt, skip_if_zero=True)
+
+
+def data_take(x_data, y_data, cnt):
+    return generic_skip(x_data, y_data, cnt, skip_if_zero=False)
+
+
+def data_generator(args, model, skip=None, take=None):
     def _batch(inp):
         b = np.zeros((1, *model.input_size, 1), dtype='float32')
         b[0] = inp
         return b
 
+    assert any([skip, take]), 'You should have skip or take, or must know what your are doing'
     x_train, y_train = load_data(args, model, 'train/raw/samples', 'train/clean/samples')
+    if skip:
+        x_train, y_train = data_skip(x_train, y_train, skip)
+        print(f'Skip len: {len(x_train)}')
+    if take:
+        x_train, y_train = data_take(x_train, y_train, take)
+        print(f'Take len: {len(x_train)}')
     print(f'Splitted samples length: {len(x_train)}')
     bx, by = Batch(args.batch_size, model.input_size), Batch(args.batch_size, model.input_size)
+
     while True:
         c = 0
         for x, y in zip(x_train, y_train):
             outx, outy = bx.append(x), by.append(y)
             c += 1
-            if c % 7 == 0 or c % 10 == 0:
-                pass
-                # yield y, y
-            if not outx is None:
+            if outx is not None:
                 yield outx, outy
                 bx, by = (
                     Batch(args.batch_size, model.input_size),
@@ -154,6 +182,9 @@ def data_generator(args, model):
             if args.display:
                 display(x)
                 display(y)
+
+
+VALIDATION_RATE = 8
 
 
 def train(args):
@@ -172,9 +203,12 @@ def train(args):
     )
     callbacks = [model_checkpoint, TensorBoard(log_dir='tensorboard_log')]
     if args.early_stopping:
-        callbacks.append(EarlyStopping(monitor='loss', verbose=1, patience=50))
+        callbacks.append(EarlyStopping(monitor='val_loss', verbose=1, patience=50))
+
     cnn.model.fit_generator(
-        data_generator(args, cnn),
+        data_generator(args, cnn, skip=VALIDATION_RATE),
+        validation_data=data_generator(args, cnn, take=VALIDATION_RATE),
+        validation_steps=int(args.epoch_steps / args.batch_size),
         steps_per_epoch=args.epoch_steps,
         epochs=args.epochs,
         verbose=1,
@@ -212,7 +246,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     add_common_arguments(parser)
     parser.add_argument('--best', action='store_true')
-    parser.add_argument('--monitor', default='acc')
+    parser.add_argument('--monitor', default='val_acc')
     parser.add_argument('--period', default=1, type=int)
     parser.add_argument('-e', '--epochs', default=100000, type=int)
     parser.add_argument('--epoch-steps', default=16, type=int)
