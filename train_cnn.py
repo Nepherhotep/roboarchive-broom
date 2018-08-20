@@ -189,6 +189,8 @@ def add_common_arguments(parser):
     )
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('-b', '--batch-size', default=4, type=int)
+    parser.add_argument('--learning-rate', default=1e-4, type=float)
+    parser.add_argument('--decay', default=0, type=float)
 
 
 def display(*images):
