@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
-from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
+from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 
 import cv2
 from cnn import get_cnn
@@ -156,7 +156,6 @@ def data_generator(args, model):
                 display(y)
 
 
-
 def train(args):
     configure_backend(args)
 
@@ -165,7 +164,11 @@ def train(args):
 
     cnn = get_cnn(args)
     model_checkpoint = ModelCheckpoint(
-        args.weights_file, monitor='acc', verbose=1, save_best_only=args.best, period=args.period
+        args.weights_file,
+        monitor=args.monitor,
+        verbose=1,
+        save_best_only=args.best,
+        period=args.period,
     )
     # early_stopping = EarlyStopping(monitor='loss', verbose=1, patience=50)
     cnn.model.fit_generator(
@@ -175,6 +178,7 @@ def train(args):
         verbose=1,
         callbacks=[model_checkpoint, TensorBoard(log_dir='tensorboard_log')],
     )
+
 
 def add_common_arguments(parser):
     parser.add_argument(
@@ -206,6 +210,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     add_common_arguments(parser)
     parser.add_argument('--best', action='store_true')
+    parser.add_argument('--monitor', default='acc')
     parser.add_argument('--period', default=1, type=int)
     parser.add_argument('-e', '--epochs', default=100000, type=int)
     parser.add_argument('--epoch-steps', default=16, type=int)
