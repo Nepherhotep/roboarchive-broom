@@ -170,13 +170,15 @@ def train(args):
         save_best_only=args.best,
         period=args.period,
     )
-    # early_stopping = EarlyStopping(monitor='loss', verbose=1, patience=50)
+    callbacks = [model_checkpoint, TensorBoard(log_dir='tensorboard_log')]
+    if args.early_stopping:
+        callbacks.append(EarlyStopping(monitor='loss', verbose=1, patience=50))
     cnn.model.fit_generator(
         data_generator(args, cnn),
         steps_per_epoch=args.epoch_steps,
         epochs=args.epochs,
         verbose=1,
-        callbacks=[model_checkpoint, TensorBoard(log_dir='tensorboard_log')],
+        callbacks=callbacks,
     )
 
 
@@ -216,6 +218,8 @@ if __name__ == '__main__':
     parser.add_argument('--epoch-steps', default=16, type=int)
     parser.add_argument('-d', '--display', action='store_true')
     parser.add_argument('-f', '--filter')
+    parser.add_argument('--early-stopping', action='store_true')
+    parser.add_argument('--patience', type=int, default=50)
 
     args = parser.parse_args()
 
