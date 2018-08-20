@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
 
 import cv2
 from cnn import get_cnn
@@ -156,6 +156,7 @@ def data_generator(args, model):
                 display(y)
 
 
+
 def train(args):
     configure_backend(args)
 
@@ -166,14 +167,14 @@ def train(args):
     model_checkpoint = ModelCheckpoint(
         args.weights_file, monitor='acc', verbose=1, save_best_only=args.best, period=args.period
     )
+    # early_stopping = EarlyStopping(monitor='loss', verbose=1, patience=50)
     cnn.model.fit_generator(
         data_generator(args, cnn),
         steps_per_epoch=args.epoch_steps,
         epochs=args.epochs,
         verbose=1,
-        callbacks=[model_checkpoint],
+        callbacks=[model_checkpoint, TensorBoard(log_dir='tensorboard_log')],
     )
-
 
 def add_common_arguments(parser):
     parser.add_argument(
