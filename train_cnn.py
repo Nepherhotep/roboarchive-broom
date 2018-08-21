@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import datetime
 import functools
 import os
 from glob import glob
@@ -201,7 +202,8 @@ def train(args):
         save_best_only=args.best,
         period=args.period,
     )
-    callbacks = [model_checkpoint, TensorBoard(log_dir='tensorboard_log')]
+    run_name = datetime.datetime.now().strftime('%Y_%M_%D-%H:%M')
+    callbacks = [model_checkpoint, TensorBoard(log_dir=f'tensorboard_log/{run_name}')]
     if args.early_stopping:
         callbacks.append(EarlyStopping(monitor='val_loss', verbose=1, patience=50))
 
