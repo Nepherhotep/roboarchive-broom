@@ -89,7 +89,7 @@ def parse_args():
         default='output.png',
     )
     parser.add_argument('-d', '--display', action='store_true')
-    parser.add_argument('--padding', default=16, type=int)  # maybe 0
+    parser.add_argument('--padding', default=0, type=int)  # maybe 0
     parser.add_argument('--scale', default=None, type=int)  # maybe 0
     return parser.parse_args()
 
