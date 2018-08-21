@@ -13,7 +13,7 @@ class BaseCNN:
         self.model = self.get_model()
         if os.path.exists(args.weights_file):
             self.load(args.weights_file)
-        self.model.summary()
+        # self.model.summary()
 
     @property
     def input_size(self):
