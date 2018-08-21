@@ -74,7 +74,7 @@ def fake_processing(tile):
     return tile[16:48, 16:48].flatten()
 
 
-if __name__ == '__main__':
+def parse_args():
     parser = argparse.ArgumentParser()
     add_common_arguments(parser)
     parser.add_argument(
@@ -91,8 +91,9 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--display', action='store_true')
     parser.add_argument('--padding', default=16, type=int)  # maybe 0
     parser.add_argument('--scale', default=None, type=int)  # maybe 0
+    return parser.parse_args()
 
-    args = parser.parse_args()
 
+if __name__ == '__main__':
     p = FileProcessor()
-    p.process(args)
+    p.process(parse_args())

@@ -244,7 +244,7 @@ def display(*images):
     plt.show()
 
 
-if __name__ == '__main__':
+def parse_args():
     parser = argparse.ArgumentParser()
     add_common_arguments(parser)
     parser.add_argument('--best', action='store_true')
@@ -257,6 +257,8 @@ if __name__ == '__main__':
     parser.add_argument('--early-stopping', action='store_true')
     parser.add_argument('--patience', type=int, default=50)
 
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    train(args)
+
+if __name__ == '__main__':
+    train(parse_args())

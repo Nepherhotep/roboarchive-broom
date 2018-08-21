@@ -69,7 +69,7 @@ def split(filename, scale_to_width=1024, tile_size=32, padding=16, output_dir='s
         j = 0
 
 
-if __name__ == '__main__':
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('-o', '--out-dir', default='split', dest='out_dir', help='Output directory')
     parser.add_argument('-i', '--image-file', required=True, dest='image_file', help='Image file')
@@ -93,7 +93,11 @@ if __name__ == '__main__':
         help='Background color from 0 to 255',
     )
 
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = parse_args()
     if os.path.isfile(args.image_file):
         if not os.path.exists(args.out_dir):
             os.mkdir(args.out_dir)
