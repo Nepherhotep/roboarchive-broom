@@ -228,7 +228,7 @@ def add_common_arguments(parser):
         dest='cnn_name',
         choices=['simple', 'unet'],
         help='CNN',
-        default=os.environ.get('CNN_NAME'),
+        default=os.environ.get('CNN_NAME') or 'unet',
     )
     parser.add_argument('--cpu', action='store_true')
     parser.add_argument('-b', '--batch-size', default=4, type=int)
