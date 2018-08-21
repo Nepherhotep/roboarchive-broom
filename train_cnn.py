@@ -248,7 +248,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     add_common_arguments(parser)
     parser.add_argument('--best', action='store_true')
-    parser.add_argument('--monitor', default='val_acc')
+    parser.add_argument('--monitor', default='val_loss')
     parser.add_argument('--period', default=1, type=int)
     parser.add_argument('-e', '--epochs', default=100000, type=int)
     parser.add_argument('--epoch-steps', default=16, type=int)
