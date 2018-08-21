@@ -4,3 +4,4 @@ tensorflow==1.10.0
 # tensorflow-gpu==1.10.0
 opencv-python==3.4.2.17
 matplotlib==2.2.3
+tensorboard==1.*
