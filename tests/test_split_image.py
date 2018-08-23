@@ -24,11 +24,11 @@ def test_slice_tile(img):
 
 
 def test_slice_tile2(img):
-    tile, (h, w) = slice_tile(img, 0, 0, 3, 1)
-    expected = np.array([[0, 0, 0, 0, 0],
-                         [0, 0, 1, 2, 3],
-                         [0, 10, 11, 12, 13],
-                         [0, 20, 21, 22, 23],
-                         [0, 30, 31, 32, 33]], np.uint8)
+    tile, (h, w) = slice_tile(img, 0, 0, 3, 1, bg_color=7)
+    expected = np.array([[7, 7, 7, 7, 7],
+                         [7, 0, 1, 2, 3],
+                         [7, 10, 11, 12, 13],
+                         [7, 20, 21, 22, 23],
+                         [7, 30, 31, 32, 33]], np.uint8)
 
     assert np.array_equal(tile, expected), tile
