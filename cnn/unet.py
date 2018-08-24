@@ -9,7 +9,7 @@ from keras.layers import (
     UpSampling2D,
 )
 from keras.models import Input, Model
-from keras.optimizers import Adam
+from keras import optimizers
 
 import cv2
 
@@ -83,8 +83,9 @@ def UNet(
 
 class UnetCNN(BaseCNN):
     def get_model(self):
-        model = UNet((256, 256, 1))
-        opt = Adam(lr=self.args.learning_rate, decay=self.args.decay)
+        model = UNet((self.args.tile_size, self.args.tile_size, 1))
+        opt = optimizers.Adam(lr=self.args.learning_rate, decay=self.args.decay)
+        opt = optimizers.Nadam(lr=self.args.learning_rate)
         # model.compile(optimizer=Adam(lr=1e-4), loss="binary_crossentropy", metrics=["accuracy"])
         model.compile(optimizer=opt, loss="binary_crossentropy", metrics=["accuracy"])
         return model
