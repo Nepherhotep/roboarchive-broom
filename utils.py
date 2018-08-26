@@ -1,12 +1,29 @@
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def display(*images):
-    for image in images:
-        if len(image.shape) == 4:
-            image = image[0, :, :, 0]
+    if len(images[0].shape) == 4:
+        for i in images:
+            display(*i)
+        return
+
+    if len(images) == 1:
+        sp, axarray = plt.subplots(len(images))
+    else:
+        ln = len(images)
+        if ln % 2 == 0:
+            rows = int(ln / 2)
+        else:
+            rows = int(ln / 2) + 1
+        sp, axarray = plt.subplots(rows, 2)
+    for image, (_idx, fig) in zip(images, np.ndenumerate(axarray)):
         if len(image.shape) == 3:
             image = image[:, :, 0]
-        plt.imshow(image, cmap=cm.gray)
+        if image.dtype == 'float32':
+            _max = 1
+        else:
+            _max = 255
+        fig.imshow(image, cmap=cm.gray, vmin=0, vmax=_max)
     plt.show()
