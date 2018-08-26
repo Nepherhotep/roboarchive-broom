@@ -35,16 +35,21 @@ def train(args):
         save_best_only=args.best,
         period=args.period,
     )
-    run_name = datetime.datetime.now().strftime(f'%Y/%m/%d/%H_%M_lr_{args.learning_rate}')
+    if args.comment:
+        uniq_part = args.comment
+    else:
+        uniq_part = f'lr_{args.learning_rate}'
+    run_name = datetime.datetime.now().strftime(f'%Y/%m/%d/%H_%M_{uniq_part}')
     callbacks = [model_checkpoint, TensorBoard(log_dir=f'tensorboard_log/{run_name}')]
     if args.early_stopping:
         callbacks.append(EarlyStopping(monitor='val_loss', verbose=1, patience=50))
     data_source = DataSource(args, cnn)
+    steps = args.epoch_steps if args.epoch_steps else data_source.ideal_steps
     cnn.model.fit_generator(
         data_source.data_generator(),
         validation_data=data_source.validation_generator(),
-        validation_steps=int(args.epoch_steps / args.batch_size),
-        steps_per_epoch=args.epoch_steps,
+        validation_steps=int(steps / args.batch_size),
+        steps_per_epoch=steps,
         epochs=args.epochs,
         verbose=1,
         callbacks=callbacks,
@@ -74,14 +79,17 @@ def parse_args():
     parser = argparse.ArgumentParser()
     add_common_arguments(parser)
     parser.add_argument('--best', action='store_true')
+    parser.add_argument('--comment')
     parser.add_argument('--monitor', default='val_loss')
     parser.add_argument('--period', default=1, type=int)
     parser.add_argument('-e', '--epochs', default=100000, type=int)
-    parser.add_argument('--epoch-steps', default=16, type=int)
+    parser.add_argument('--epoch-steps', default=None, type=int)
     parser.add_argument('-d', '--display', action='store_true')
     parser.add_argument('-f', '--filter')
     parser.add_argument('--early-stopping', action='store_true')
     parser.add_argument('--patience', type=int, default=50)
+    parser.add_argument('--transformated', type=float, default=0.5,
+                        help='Ratio of transoformated images')
 
     return parser.parse_args()
 
