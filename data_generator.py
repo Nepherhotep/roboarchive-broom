@@ -2,14 +2,12 @@ import os
 import random
 from glob import glob
 from itertools import chain, cycle
-from keras.preprocessing.image import ImageDataGenerator
-from keras.utils import np_utils
 
 import numpy as np
+from keras.preprocessing.image import ImageDataGenerator
 
 import cv2
 from split_image import slice_tile
-from utils import display
 
 VALIDATION_RATE = 8
 SAME_RATE = 7
@@ -121,7 +119,8 @@ dg = ImageDataGenerator(
     height_shift_range=0.2,
     # brightness_range=(-0.3, 0.3),
     horizontal_flip=False,
-    vertical_flip=False)
+    vertical_flip=False,
+)
 
 
 class ImageWrapper:

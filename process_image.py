@@ -11,11 +11,7 @@ from utils import display
 
 
 class FileProcessor:
-    def process(
-        self,
-        args,
-        bg_color=0,
-    ):
+    def process(self, args, bg_color=0):
         """
         Scale image to width 1024, convert to grayscale and than slice by tiles.
         It's possible to slice image with padding and each tile will contain pixels from surrounding tiles
@@ -25,6 +21,7 @@ class FileProcessor:
 
         tile_size = cnn.tile_size
         img = cv2.imread(args.input_file, cv2.IMREAD_GRAYSCALE)
+        assert img is not None, f'No file: {args.input_file}'
 
         h, w = img.shape
 
@@ -60,7 +57,7 @@ class FileProcessor:
 
                 output_img[
                     j * tile_size : (j + 1) * tile_size, i * tile_size : (i + 1) * tile_size
-                ] = out_tile[:orig_size[0], :orig_size[1]]
+                ] = out_tile[: orig_size[0], : orig_size[1]]
 
                 j += 1
             i += 1
