@@ -4,6 +4,13 @@ import numpy as np
 
 
 def display(*images):
+    if len(images) == 2 and len(images[0]) == len(images[1]):
+        ims = []
+        for x, y in zip(*images):
+            ims.append(x)
+            ims.append(y)
+        return display(*ims)
+
     if len(images[0].shape) == 4:
         for i in images:
             display(*i)
@@ -18,6 +25,7 @@ def display(*images):
         else:
             rows = int(ln / 2) + 1
         sp, axarray = plt.subplots(rows, 2)
+
     for image, (_idx, fig) in zip(images, np.ndenumerate(axarray)):
         if len(image.shape) == 3:
             image = image[:, :, 0]
