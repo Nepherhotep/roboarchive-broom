@@ -66,7 +66,7 @@ class BaseMain:
     DST_DIR = 'text_extracted'
 
     def main(self, args):
-        d = os.path.join(args.data_dir, 'nist_orig')
+        d = os.path.join(args.data_dir, self.SRC_DIR)
 
         lst = [f for f in os.listdir(d) if (f.endswith('.png') or f.endswith('.jpg'))]
         lst.sort()
@@ -92,5 +92,5 @@ class ExtractTextMain(BaseMain):
 
 if __name__ == '__main__':
     args = parse_args()
-    Main().main(args)
+    ExtractTextMain().main(args)
     print('done')
