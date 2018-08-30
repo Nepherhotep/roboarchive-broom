@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-dir', default='train/gen')
+    parser.add_argument('--index')
     return parser.parse_args()
 
 
@@ -65,14 +66,21 @@ class BaseMain:
     SRC_DIR = 'nist_orig'
     DST_DIR = 'text_extracted'
 
-    def main(self, args):
+    def get_sorted_files(self, args):
         d = os.path.join(args.data_dir, self.SRC_DIR)
 
         lst = [f for f in os.listdir(d) if (f.endswith('.png') or f.endswith('.jpg'))]
         lst.sort()
+        return lst
+
+    def main(self, args):
+        lst = self.get_sorted_files(args)
+
+        if args.index:
+            lst = lst[args.index:args.index+1]
 
         skipped = 0
-        for i, f in enumerate(lst[:]):
+        for i, f in enumerate(lst):
             input_path = os.path.join(args.data_dir, self.SRC_DIR, f)
             output_path = os.path.join(args.data_dir, self.DST_DIR, f)
 
