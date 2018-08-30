@@ -61,10 +61,9 @@ def extract_text(args, input_path, output_path):
         return False
 
 
-class Main:
-    def __init__(self):
-        self.orig_dir = 'nist_org'
-        self.dst_dir = 'text_extracted'
+class BaseMain:
+    SRC_DIR = 'nist_orig'
+    DST_DIR = 'text_extracted'
 
     def main(self, args):
         d = os.path.join(args.data_dir, 'nist_orig')
@@ -74,8 +73,8 @@ class Main:
 
         skipped = 0
         for i, f in enumerate(lst[:]):
-            input_path = os.path.join(args.data_dir, 'nist_orig', f)
-            output_path = os.path.join(args.data_dir, 'text_extracted', f)
+            input_path = os.path.join(args.data_dir, self.SRC_DIR, f)
+            output_path = os.path.join(args.data_dir, self.DST_DIR, f)
 
             print('Processing {}/{}, omitted {}'.format(i, len(lst), skipped))
             result = self.process_file(args, input_path, output_path)
@@ -83,10 +82,15 @@ class Main:
                 skipped += 1
 
     def process_file(self, args, input_path, output_path):
+        raise NotImplementedError
+
+
+class ExtractTextMain(BaseMain):
+    def process_file(self, args, input_path, output_path):
         return extract_text(args, input_path, output_path)
 
 
 if __name__ == '__main__':
     args = parse_args()
-    main(args)
+    Main().main(args)
     print('done')
