@@ -36,8 +36,21 @@ def extract_text(args, input_path, output_path):
     approx = cv2.approxPolyDP(cnt, epsilon, True)
 
     if approx.shape[0] == 4:
-        cv2.drawContours(img, [cnt], 0, (255, 0, 0), 3)
-        cv2.imwrite(output_path, img)
+        mask = np.zeros(grayscale.shape, np.uint8)
+
+        cv2.fillConvexPoly(mask, cnt, 255)
+
+        inverted = 255 - mask
+
+        # display(inverted)
+
+        dst = cv2.bitwise_and(grayscale, grayscale, mask=mask)
+
+        dst = inverted + dst
+        print(dst[450:451, 500:510])
+        # cv2.imwrite(output_path, dst)
+
+        display(dst)
         return True
 
     else:
@@ -52,7 +65,7 @@ def main(args):
     lst.sort()
 
     skipped = 0
-    for i, f in enumerate(lst):
+    for i, f in enumerate(lst[5:6]):
         input_path = os.path.join(args.data_dir, 'nist_orig', f)
         output_path = os.path.join(args.data_dir, 'text_extracted', f)
 
