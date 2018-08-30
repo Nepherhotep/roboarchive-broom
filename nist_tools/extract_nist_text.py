@@ -61,21 +61,29 @@ def extract_text(args, input_path, output_path):
         return False
 
 
-def main(args):
-    d = os.path.join(args.data_dir, 'nist_orig')
+class Main:
+    def __init__(self):
+        self.orig_dir = 'nist_org'
+        self.dst_dir = 'text_extracted'
 
-    lst = [f for f in os.listdir(d) if (f.endswith('.png') or f.endswith('.jpg'))]
-    lst.sort()
+    def main(self, args):
+        d = os.path.join(args.data_dir, 'nist_orig')
 
-    skipped = 0
-    for i, f in enumerate(lst[:]):
-        input_path = os.path.join(args.data_dir, 'nist_orig', f)
-        output_path = os.path.join(args.data_dir, 'text_extracted', f)
+        lst = [f for f in os.listdir(d) if (f.endswith('.png') or f.endswith('.jpg'))]
+        lst.sort()
 
-        print('Processing {}/{}, omitted {}'.format(i, len(lst), skipped))
-        result = extract_text(args, input_path, output_path)
-        if not result:
-            skipped += 1
+        skipped = 0
+        for i, f in enumerate(lst[:]):
+            input_path = os.path.join(args.data_dir, 'nist_orig', f)
+            output_path = os.path.join(args.data_dir, 'text_extracted', f)
+
+            print('Processing {}/{}, omitted {}'.format(i, len(lst), skipped))
+            result = self.process_file(args, input_path, output_path)
+            if not result:
+                skipped += 1
+
+    def process_file(self, args, input_path, output_path):
+        return extract_text(args, input_path, output_path)
 
 
 if __name__ == '__main__':
