@@ -32,15 +32,17 @@ def extract_text(args, input_path, output_path):
     im2, contours, hierarchy = cv2.findContours(inverted, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     cnt = max(contours, key=cv2.contourArea)
 
-    print(cnt)
     epsilon = 0.1 * cv2.arcLength(cnt, True)
     approx = cv2.approxPolyDP(cnt, epsilon, True)
 
-    print(approx)
-    cv2.drawContours(img, [cnt], 0, (255, 0, 0), 3)
+    if approx.shape[0] == 4:
+        cv2.drawContours(img, [cnt], 0, (255, 0, 0), 3)
+        cv2.imwrite(output_path, img)
+        return True
 
-    display(img)
-    # cv2.imwrite(output_path, img)
+    else:
+        print('Omitting rectangle of size {}'.format(approx.shape[0]))
+        return False
 
 
 def main(args):
@@ -49,12 +51,15 @@ def main(args):
     lst = [f for f in os.listdir(d) if (f.endswith('.png') or f.endswith('.jpg'))]
     lst.sort()
 
-    for i, f in enumerate(lst[6:7]):
+    skipped = 0
+    for i, f in enumerate(lst):
         input_path = os.path.join(args.data_dir, 'nist_orig', f)
         output_path = os.path.join(args.data_dir, 'text_extracted', f)
 
-        print('Processing {}/{}'.format(i, len(lst)))
-        extract_text(args, input_path, output_path)
+        print('Processing {}/{}, omitted {}'.format(i, len(lst), skipped))
+        result = extract_text(args, input_path, output_path)
+        if not result:
+            skipped += 1
 
 
 if __name__ == '__main__':
