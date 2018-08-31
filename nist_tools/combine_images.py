@@ -9,8 +9,10 @@ from nist_tools.extract_nist_text import BaseMain, parse_args, display
 
 class CombineMain(BaseMain):
     SRC_DIR = 'blurred'
-    DST_DIR = 'combined'
+    DST_DIR = 'combined_raw'
+
     BG_DIR = 'backgrounds'
+    SMPL_DIR = 'combined_clean'
 
     def __init__(self):
         self.backgrounds = os.listdir(os.path.join(args.data_dir, self.BG_DIR))
@@ -31,19 +33,19 @@ class CombineMain(BaseMain):
         if args.index:
             pairs = pairs[args.index:args.index + 1]
 
-        skipped = 0
         for i, pair in enumerate(pairs):
             a_path = os.path.join(args.data_dir, self.SRC_DIR, pair[0])
             b_path = os.path.join(args.data_dir, self.SRC_DIR, pair[1])
+
+            fname = 'combined-{}.png'.format(i)
+            smpl_path = os.path.join(args.data_dir, self.SMPL_DIR, fname)
+
             bg_path = self.get_random_bg()
-            output_path = os.path.join(args.data_dir, self.DST_DIR, 'combined-{}.png'.format(i))
+            output_path = os.path.join(args.data_dir, self.DST_DIR, fname)
 
-            print('Processing {}/{}, omitted {}'.format(i, len(pairs), skipped))
+            print('Processing {}/{}'.format(i, len(pairs)))
 
-            result = self.process_file(args, a_path, b_path, bg_path, output_path)
-
-            if not result:
-                skipped += 1
+            self.combine_file(args, a_path, b_path, bg_path, output_path, smpl_path)
 
     def random_bool(self):
         return random.choice([True, False])
@@ -62,7 +64,7 @@ class CombineMain(BaseMain):
         img = img - (density * a_img).astype('int')
         return img.clip(0, 255)
 
-    def process_file(self, args, a_path, b_path, bg_path, output_path):
+    def combine_file(self, args, a_path, b_path, bg_path, output_path, smpl_path):
 
         # open files and invert text
         bg_img = cv2.imread(bg_path, cv2.IMREAD_GRAYSCALE).astype('int')
@@ -75,8 +77,15 @@ class CombineMain(BaseMain):
         if self.random_bool():
             bg_img = cv2.flip(bg_img, 1)
 
-        img = self.merge_with_text(bg_img, a_path, 1, 100)
-        cv2.imwrite(output_path, img)
+        train_img = np.full(bg_img.shape, 255)
+
+        img = bg_img.copy()
+        for path, v_offset in [(a_path, 100), (b_path, 1000)]:
+            img = self.merge_with_text(img, path, 0.3, v_offset)
+            train_img = self.merge_with_text(train_img, path, 1, v_offset)
+
+            cv2.imwrite(output_path, img)
+            cv2.imwrite(smpl_path, train_img)
 
 
 if __name__ == '__main__':
