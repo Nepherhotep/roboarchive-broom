@@ -203,27 +203,25 @@ class ImageWrapper:
 
     def shuffle(self):
         order = self.shuffle_order
-        self.all_tiles = [y for x, y in sorted(zip(order, self.load_splitted()))]
-        self.validation_tiles = []
-        assert len(self.all_tiles) > 1
+        all_tiles = [y for x, y in sorted(zip(order, self.load_splitted()))]
+        validation_tiles = []
+        assert len(all_tiles) > 1
         if self.validation:
-            num_validation = int(len(self.all_tiles) / VALIDATION_RATE + 1)
+            num_validation = max(int(len(all_tiles) / VALIDATION_RATE), 1)
             print(f'Add {num_validation} samples as validation samples')
             for i in range(num_validation):
-                self.validation_tiles.append(self.all_tiles.pop())
+                validation_tiles.append(all_tiles.pop())
+        return all_tiles, validation_tiles
 
-        self.data_generator = self.all_tiles
-        self.validation_data_generator = self.validation_tiles
-        self.ready = True
+    @property
+    def data_generator(self):
+        out, _ = self.shuffle()
+        return out
 
-    def custom_data_generator(self):
-        return cycle(self.all_tiles)
-
-    def close(self):
-        self.all_tiles = []
-
-    def close_validation(self):
-        self.validation_tiles = []
+    @property
+    def validation_data_generator(self):
+        _, out = self.shuffle()
+        return out
 
     def debug(self, tile, count):
         if self.args.display:
@@ -254,23 +252,13 @@ class ImagePair:
         random.shuffle(order)
         x.set_shuffle(order), y.set_shuffle(order)
 
-    def shuffle(self, src, dst):
-        src.shuffle()
-        dst.shuffle()
-
     def data_generator(self):
-        self.shuffle(self.src, self.dst)
         for x, y in zip(self.src.data_generator, self.dst.data_generator):
             yield x, y
-        self.src.close()
-        self.dst.close()
 
     def validation_generator(self):
-        self.shuffle(self.src, self.dst)
         for x, y in zip(self.src.validation_data_generator, self.dst.validation_data_generator):
             yield x, y
-        self.src.close_validation()
-        self.dst.close_validation()
 
     def transformated(self):
         return ImagePair(self.args, self.model, self.src_path, self.dst_path, should_trans=True)
