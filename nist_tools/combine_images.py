@@ -25,17 +25,17 @@ class CombineMain(BaseMain):
     def main(self, args):
         lst = self.get_sorted_files(args)
 
-        a = lst[::2]
-        b = lst[1::2]
+        a = lst[::3]
+        b = lst[1::3]
+        c = lst[2::3]
 
-        pairs = list(zip(a, b))
+        text_files = list(zip(a, b, c))
 
         if args.index:
-            pairs = pairs[args.index:args.index + 1]
+            text_files = text_files[args.index:args.index + 1]
 
-        for i, pair in enumerate(pairs):
-            a_path = os.path.join(args.data_dir, self.SRC_DIR, pair[0])
-            b_path = os.path.join(args.data_dir, self.SRC_DIR, pair[1])
+        for i, chunk in enumerate(text_files):
+            paths = [os.path.join(args.data_dir, self.SRC_DIR, p) for p in chunk]
 
             fname = 'combined-{}.png'.format(i)
             smpl_path = os.path.join(args.data_dir, self.SMPL_DIR, fname)
@@ -43,9 +43,9 @@ class CombineMain(BaseMain):
             bg_path = self.get_random_bg()
             output_path = os.path.join(args.data_dir, self.DST_DIR, fname)
 
-            print('Processing {}/{}'.format(i, len(pairs)))
+            print('Processing {}/{}'.format(i, len(text_files)))
 
-            self.combine_file(args, a_path, b_path, bg_path, output_path, smpl_path)
+            self.combine_file(args, bg_path, output_path, smpl_path, *paths)
 
     def random_bool(self):
         return random.choice([True, False])
@@ -64,28 +64,30 @@ class CombineMain(BaseMain):
         img = img - (density * a_img).astype('int')
         return img.clip(0, 255)
 
-    def combine_file(self, args, a_path, b_path, bg_path, output_path, smpl_path):
+    def combine_file(self, args, bg_path, output_path, smpl_path, *text_paths):
 
         # open files and invert text
-        bg_img = cv2.imread(bg_path, cv2.IMREAD_GRAYSCALE).astype('int')
+        raw_image = cv2.imread(bg_path, cv2.IMREAD_GRAYSCALE).astype('int')
 
         # random horizontal flip
         if self.random_bool():
-            bg_img = cv2.flip(bg_img, 0)
+            raw_image = cv2.flip(raw_image, 0)
 
         # random vertical flip
         if self.random_bool():
-            bg_img = cv2.flip(bg_img, 1)
+            raw_image = cv2.flip(raw_image, 1)
 
-        train_img = np.full(bg_img.shape, 255)
+        # create a clean training image
+        clean_image = np.full(raw_image.shape, 255)
 
-        img = bg_img.copy()
-        for path, v_offset in [(a_path, 100), (b_path, 1000)]:
-            img = self.merge_with_text(img, path, 0.3, v_offset)
-            train_img = self.merge_with_text(train_img, path, 1, v_offset)
+        # save reference to raw image
+        for i, path in enumerate(text_paths):
+            v_offset = 100 + i * 1200
+            raw_image = self.merge_with_text(raw_image, path, 0.3, v_offset)
+            clean_image = self.merge_with_text(clean_image, path, 1, v_offset)
 
-            cv2.imwrite(output_path, img)
-            cv2.imwrite(smpl_path, train_img)
+        cv2.imwrite(output_path, raw_image)
+        cv2.imwrite(smpl_path, clean_image)
 
 
 if __name__ == '__main__':
