@@ -1,10 +1,10 @@
 import os
 import random
 
-import nist_tools
-from nist_tools.extract_nist_text import BaseMain, parse_args, display
-
 import cv2
+import numpy as np
+
+from nist_tools.extract_nist_text import BaseMain, parse_args, display
 
 
 class CombineMain(BaseMain):
@@ -28,6 +28,9 @@ class CombineMain(BaseMain):
 
         pairs = list(zip(a, b))
 
+        if args.index:
+            pairs = pairs[args.index:args.index + 1]
+
         skipped = 0
         for i, pair in enumerate(pairs):
             a_path = os.path.join(args.data_dir, self.SRC_DIR, pair[0])
@@ -45,11 +48,24 @@ class CombineMain(BaseMain):
     def random_bool(self):
         return random.choice([True, False])
 
-    def process_file(self, args, a_path, b_path, bg_path, output_path):
-        a_img = cv2.imread(a_path, cv2.IMREAD_GRAYSCALE)
-        b_img = cv2.imread(a_path, cv2.IMREAD_GRAYSCALE)
+    def load_text_image(self, shape, path, vert_offset, hor_offset):
+        layer = np.full(shape, 255)
+        sub_image = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
 
-        bg_img = cv2.imread(bg_path, cv2.IMREAD_GRAYSCALE)
+        h, w = sub_image.shape
+        layer[vert_offset:vert_offset + h, hor_offset:hor_offset + w] = sub_image
+        return layer
+
+    def merge_with_text(self, img, text_file_path, density, vert_offset, hor_offset=200):
+        a_img = 255 - self.load_text_image(img.shape, text_file_path, vert_offset, hor_offset)
+
+        img = img - (density * a_img).astype('int')
+        return img.clip(0, 255)
+
+    def process_file(self, args, a_path, b_path, bg_path, output_path):
+
+        # open files and invert text
+        bg_img = cv2.imread(bg_path, cv2.IMREAD_GRAYSCALE).astype('int')
 
         # random horizontal flip
         if self.random_bool():
@@ -59,7 +75,8 @@ class CombineMain(BaseMain):
         if self.random_bool():
             bg_img = cv2.flip(bg_img, 1)
 
-        cv2.imwrite(output_path, bg_img)
+        img = self.merge_with_text(bg_img, a_path, 1, 100)
+        cv2.imwrite(output_path, img)
 
 
 if __name__ == '__main__':

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data-dir', default='train/gen')
-    parser.add_argument('--index')
+    parser.add_argument('--index', type=int)
     return parser.parse_args()
 
 
