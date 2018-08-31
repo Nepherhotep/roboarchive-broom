@@ -45,10 +45,11 @@ def train(args):
         callbacks.append(EarlyStopping(monitor='val_loss', verbose=1, patience=50))
     data_source = DataSource(args, cnn)
     steps = args.epoch_steps if args.epoch_steps else data_source.ideal_steps
+    print(f'Number of Steps: {steps} / {max(int(steps / args.batch_size), 1)}')
     cnn.model.fit_generator(
         data_source.data_generator(),
         validation_data=data_source.validation_generator(),
-        validation_steps=int(steps / args.batch_size),
+        validation_steps=max(int(steps / args.batch_size), 1),
         steps_per_epoch=steps,
         epochs=args.epochs,
         verbose=1,

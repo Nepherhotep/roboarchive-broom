@@ -1,4 +1,5 @@
 import os
+import pickle
 import random
 from glob import glob
 from itertools import chain, cycle
@@ -123,6 +124,38 @@ dg = ImageDataGenerator(
 )
 
 
+class PickledCache:
+    path = 'cache.pickle'
+
+    def __init__(self):
+        if not os.path.exists(self.path):
+            self.dct = {}
+        else:
+            with open(self.path, 'rb') as f:
+                self.dct = pickle.load(f)
+
+    def check_size(self, size):
+        _size = self.get('_size')
+        if _size is None:
+            self.set('_size', size)
+        else:
+            assert size == _size, f'Cache has wrong tile size: {size} vs {_size}'
+
+    def get(self, key):
+        return self.dct.get(key)
+
+    def set(self, key, value):
+        self.dct[key] = value
+        self.save()
+
+    def save(self):
+        with open(self.path, 'wb') as f:
+            pickle.dump(self.dct, f)
+
+
+cache = PickledCache()
+
+
 class ImageWrapper:
     def __init__(self, path, args, model, trans=None, validation=True):
         self.path = path
@@ -131,11 +164,21 @@ class ImageWrapper:
         self.ready = False
         self.trans = trans
         self.validation = validation
-        image = load_img(path)
-        self.original_shape = image.shape
-        image = self.post_load(image)
-        self.all_tiles = list(split_image(image, model, args.tile_size))
-        self.len_tiles = len(self.all_tiles)
+        cache.check_size(args.tile_size)
+        if cache.get(path):
+            self.original_shape, self.len_tiles = cache.get(path)
+        else:
+            image = load_img(path)
+            self.original_shape = image.shape
+            # image = self.post_load(image)
+            self.len_tiles = len(list(self.load_splitted()))
+            cache.set(path, (self.original_shape, self.len_tiles))
+
+    def load_splitted(self):
+        return list(split_image(load_img(self.path), self.model, self.args.tile_size))
+
+    def set_shuffle(self, order):
+        self.shuffle_order = order
 
     def get_transformated(self, trans):
         return ImageWrapper(self.path, self.args, self.model, trans, validation=False)
@@ -158,8 +201,9 @@ class ImageWrapper:
             return self.conv_from(dg.apply_transform(self.conv_to(image), self.trans))
         return image
 
-    def shuffle(self, order):
-        self.all_tiles = [y for x, y in sorted(zip(order, self.all_tiles))]
+    def shuffle(self):
+        order = self.shuffle_order
+        self.all_tiles = [y for x, y in sorted(zip(order, self.load_splitted()))]
         self.validation_tiles = []
         assert len(self.all_tiles) > 1
         if self.validation:
@@ -168,18 +212,18 @@ class ImageWrapper:
             for i in range(num_validation):
                 self.validation_tiles.append(self.all_tiles.pop())
 
-        self.data_generator = cycle(self.all_tiles)
-        self.validation_data_generator = cycle(self.all_tiles)
+        self.data_generator = self.all_tiles
+        self.validation_data_generator = self.validation_tiles
         self.ready = True
-
-    def next_data(self):
-        return next(self.data_generator)
-
-    def next_validation_data(self):
-        return next(self.validation_data_generator)
 
     def custom_data_generator(self):
         return cycle(self.all_tiles)
+
+    def close(self):
+        self.all_tiles = []
+
+    def close_validation(self):
+        self.validation_tiles = []
 
     def debug(self, tile, count):
         if self.args.display:
@@ -203,18 +247,30 @@ class ImagePair:
             td = dg.get_random_transform(self.src.original_shape)
             self.src = self.src.get_transformated(td)
             self.dst = self.dst.get_transformated(td)
-        self.shuffle(self.src, self.dst)
+        self.set_shuffle(self.src, self.dst)
 
-    def shuffle(self, x, y):
+    def set_shuffle(self, x, y):
         order = list(range(x.len_tiles))
         random.shuffle(order)
-        x.shuffle(order), y.shuffle(order)
+        x.set_shuffle(order), y.set_shuffle(order)
 
-    def next_data(self):
-        return self.src.next_data(), self.dst.next_data()
+    def shuffle(self, src, dst):
+        src.shuffle()
+        dst.shuffle()
 
-    def next_validation_data(self):
-        return self.src.next_validation_data(), self.dst.next_validation_data()
+    def data_generator(self):
+        self.shuffle(self.src, self.dst)
+        for x, y in zip(self.src.data_generator, self.dst.data_generator):
+            yield x, y
+        self.src.close()
+        self.dst.close()
+
+    def validation_generator(self):
+        self.shuffle(self.src, self.dst)
+        for x, y in zip(self.src.validation_data_generator, self.dst.validation_data_generator):
+            yield x, y
+        self.src.close_validation()
+        self.dst.close_validation()
 
     def transformated(self):
         return ImagePair(self.args, self.model, self.src_path, self.dst_path, should_trans=True)
@@ -235,8 +291,8 @@ class DataSource:
     def __init__(self, args, model):
         self.args = args
         self.model = model
-        self.src_dir = 'train/raw/samples'
-        self.dst_dir = 'train/clean/samples'
+        self.src_dir = ['train/raw/samples', 'train/combined_raw']
+        self.dst_dir = ['train/clean/samples', 'train/combined_clean']
         self.pure_images = []
         self.generated_images = []
         self.fill_pure_images()
@@ -253,16 +309,17 @@ class DataSource:
         return [os.path.join(directory, x) for x in src]
 
     def file_names(self):
-        src = self.get_dir_file_names(self.src_dir)
-        dst = self.get_dir_file_names(self.dst_dir)
-        assert src == dst
-        return zip(self.full_path(self.src_dir, src), self.full_path(self.dst_dir, dst))
+        out = []
+        for src_dir, dst_dir in zip(self.src_dir, self.dst_dir):
+            src = self.get_dir_file_names(src_dir)
+            dst = self.get_dir_file_names(dst_dir)
+            assert src == dst
+            out.append(zip(self.full_path(src_dir, src), self.full_path(dst_dir, dst)))
+        return chain(*out)
 
     @property
     def ideal_steps(self):
-        tiles = 0
-        for img in self.pure_images:
-            tiles += len(img.src.all_tiles)
+        tiles = sum(x.src.len_tiles for x in self.pure_images)
         return int(tiles / self.args.batch_size / self.args.transformated) + 1
 
     def fill_pure_images(self):
@@ -282,10 +339,10 @@ class DataSource:
         )
         while True:
             for img in chain(self.pure_images, self.generated_images):
-                x_tile, y_tile = img.next_data()
-                x.append(x_tile), y.append(y_tile)
-                if x.is_ready:
-                    yield x.get_data(reset=True), y.get_data(reset=True)
+                for x_tile, y_tile in img.data_generator():
+                    x.append(x_tile), y.append(y_tile)
+                    if x.is_ready:
+                        yield x.get_data(reset=True), y.get_data(reset=True)
             self.generate_images()
 
     def validation_generator(self):
@@ -295,10 +352,10 @@ class DataSource:
         )
         while True:
             for img in chain(self.pure_images, self.generated_images):
-                x_tile, y_tile = img.next_validation_data()
-                x.append(x_tile), y.append(y_tile)
-                if x.is_ready:
-                    yield x.get_data(reset=True), y.get_data(reset=True)
+                for x_tile, y_tile in img.validation_generator():
+                    x.append(x_tile), y.append(y_tile)
+                    if x.is_ready:
+                        yield x.get_data(reset=True), y.get_data(reset=True)
 
     def trans_data_generator(self):
         x, y = (
