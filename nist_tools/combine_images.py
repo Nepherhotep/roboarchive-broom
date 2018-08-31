@@ -82,8 +82,9 @@ class CombineMain(BaseMain):
 
         # save reference to raw image
         for i, path in enumerate(text_paths):
-            v_offset = 100 + i * 1200
-            raw_image = self.merge_with_text(raw_image, path, 0.3, v_offset)
+            v_offset = 100 + i * 1250
+            density = 0.1 + random.random() * 0.4
+            raw_image = self.merge_with_text(raw_image, path, density, v_offset)
             clean_image = self.merge_with_text(clean_image, path, 1, v_offset)
 
         cv2.imwrite(output_path, raw_image)
