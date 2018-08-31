@@ -270,6 +270,8 @@ class DataSource:
             self.pure_images.append(ImagePair(self.args, self.model, x, y))
 
     def generate_images(self):
+        if self.args.no_generated:
+            return
         print('Generate new images')
         self.generated_images = [x.transformated() for x in self.pure_images]
 

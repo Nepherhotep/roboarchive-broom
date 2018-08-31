@@ -90,6 +90,7 @@ def parse_args():
     parser.add_argument('--patience', type=int, default=50)
     parser.add_argument('--transformated', type=float, default=0.5,
                         help='Ratio of transoformated images')
+    parser.add_argument('--no-generated', action='store_true')
 
     return parser.parse_args()
 
