@@ -4,6 +4,7 @@ import random
 import cv2
 import numpy as np
 
+from gen_textures import add_noise, texture, blank_image
 from nist_tools.extract_nist_text import BaseMain, parse_args, display
 
 
@@ -69,6 +70,16 @@ class CombineMain(BaseMain):
         # open files and invert text
         raw_image = cv2.imread(bg_path, cv2.IMREAD_GRAYSCALE).astype('int')
 
+        h, w = raw_image.shape
+
+        # generate random noise
+        noise = 160 - add_noise(texture(blank_image(background=125, height=4096, width=4096),
+                                        sigma=4), sigma=10).astype('float')[:h, :w]
+        noise = (random.random() * noise).astype('int')
+
+        raw_image = raw_image + noise
+        raw_image = raw_image.clip(0, 255)
+
         # random horizontal flip
         if self.random_bool():
             raw_image = cv2.flip(raw_image, 0)
@@ -83,7 +94,7 @@ class CombineMain(BaseMain):
         # save reference to raw image
         for i, path in enumerate(text_paths):
             v_offset = 100 + i * 1250
-            density = 0.1 + random.random() * 0.4
+            density = 0.2 + random.random() * 0.3
             raw_image = self.merge_with_text(raw_image, path, density, v_offset)
             clean_image = self.merge_with_text(clean_image, path, 1, v_offset)
 
